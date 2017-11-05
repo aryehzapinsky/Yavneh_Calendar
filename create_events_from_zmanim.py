@@ -16,11 +16,14 @@ from collections import namedtuple
 Detailed_Event = namedtuple("Detail_Event", "name start end")
 TIMEF = "%Y-%m-%dT%H:%M:%S"
 
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
+# Commented out this section because interfering with custom argument.
+# Should readd.
+# try:
+#     import argparse
+#     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+# except ImportError:
+#     flags = None
+flags = None
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
@@ -82,7 +85,12 @@ def round_time(dt):
 
     return rounded
 
-def get_zmanim_from_ou(start_date=None, end_date=None):
+def translate_time(event_date, time_string):
+    return datetime.combine(event_date,
+                            time(*(int(x) for x in time_string.split(":"))))
+
+
+def get_zmanim_from_ou(start_date, end_date):
     # Friday - dayOfWeek == "5"
     # CANDLE_LIGHTING = candle_lighting
     # FRIDAY_MINCHA = -15 minutes from rounded zmanim.get('sunset')
@@ -97,10 +105,10 @@ def get_zmanim_from_ou(start_date=None, end_date=None):
 
     # Sunday - dayOfweek == "7"
     # MINCHA_MAARIV = -15 minutes from zmanim.get('sunset')
-    if start_date == None:
-        start_date = datetime.date.today().strftime('%m/%d/%y')
-    if end_date == None:
-        end_date = start_date
+
+    # COMMENTS from josh:
+    # Round minutes down for shkiya and zof zman (make it earlier)
+    # round up havdalah (make it later)
 
     calendar_zmanim = []
 
@@ -117,71 +125,83 @@ def get_zmanim_from_ou(start_date=None, end_date=None):
         zmanim = day.get('zmanim')
         if day_of_week == "5":
             time_before_candle = 5
-            candle_lighting = day.get('candle_lighting')
+            candle_lighting = translate_time(event_date,
+                                             day.get('candle_lighting'))
             calendar_zmanim.append(Detailed_Event("Candle Lighting",
-                           "{}T{}".format(event_date_eng, candle_lighting),
-                           "{}T{}".format(event_date_eng, candle_lighting)))
-            friday_mincha = round_time(datetime.combine(event_date,
-                                             time(*(int(x) for x in candle_lighting.split(":")))))
+                (candle_lighting - timedelta(minutes=1)).strftime(TIMEF),
+                (candle_lighting - timedelta(minutes=1)).strftime(TIMEF)))
+
+
             calendar_zmanim.append(Detailed_Event("Mincha & Kabbalat Shabbat & Maariv",
-                                                  friday_mincha.strftime(TIMEF),
-                (friday_mincha + timedelta(hours=1, minutes=20)).strftime(TIMEF)))
+                candle_lighting.strftime(TIMEF),
+                (candle_lighting + timedelta(hours=1, minutes=20)).strftime(TIMEF)))
 
         elif day_of_week == "6":
-            sof_zman = zmanim.get('sof_zman_shema_gra')
+            sof_zman = translate_time(event_date,
+                                      zmanim.get('sof_zman_shema_gra'))
             calendar_zmanim.append(Detailed_Event("Sof Zman Kriyat Shema",
-                           "{}T{}".format(event_date_eng, sof_zman),
-                           "{}T{}".format(event_date_eng, sof_zman)))
-            shkiya  = zmanim.get('sunset')
-            calendar_zmanim.append(Detailed_Event("Shkiya",
-                           "{}T{}".format(event_date_eng, shkiya),
-                           "{}T{}".format(event_date_eng, shkiya)))
+                (sof_zman - timedelta(minutes=1)).strftime(TIMEF),
+                (sof_zman - timedelta(minutes=1)).strftime(TIMEF)))
 
-            shabbat_mincha = round_time(datetime.combine(event_date,
-                                             time(*(int(x) for x in shkiya.split(":")))))
+            shkiya  = translate_time(event_date, zmanim.get('sunset'))
+            calendar_zmanim.append(Detailed_Event("Shkiya",
+                (shkiya - timedelta(minutes=1)).strftime(TIMEF),
+                (shkiya - timedelta(minutes=1)).strftime(TIMEF)))
+
+            shabbat_mincha = round_time(shkiya)
             calendar_zmanim.append(Detailed_Event("Shabbat Mincha",
-                                                  (shabbat_mincha - timedelta(minutes=30)).strftime(TIMEF),
+                (shabbat_mincha - timedelta(minutes=30)).strftime(TIMEF),
                 (shabbat_mincha + timedelta(minutes=30)).strftime(TIMEF)))
 
-            havdalah = zmanim.get('tzeis_850_degrees')
+            havdalah = translate_time(event_date,
+                                      zmanim.get('tzeis_850_degrees'))
             calendar_zmanim.append(Detailed_Event("Havdalah",
-                           "{}T{}".format(event_date_eng, havdalah),
-                           "{}T{}".format(event_date_eng, havdalah)))
+                (havdalah + timedelta(minutes=1)).strftime(TIMEF),
+                (havdalah + timedelta(minutes=1)).strftime(TIMEF)))
 
-            maariv = round_time(datetime.combine(event_date,
-                                             time(*(int(x) for x in havdalah.split(":")))))
+            maariv = round_time(havdalah)
             calendar_zmanim.append(Detailed_Event("Maariv",
-                                                  (maariv - timedelta(minutes=10)).strftime(TIMEF),
-                                                  (maariv + timedelta(minutes=10)).strftime(TIMEF)))
+                (maariv - timedelta(minutes=10)).strftime(TIMEF),
+                (maariv + timedelta(minutes=10)).strftime(TIMEF)))
 
 
         elif day_of_week == "7":
-            shkiya = zmanim.get('sunset')
+            shkiya = translate_time(event_date,
+                                    zmanim.get('sunset'))
             calendar_zmanim.append(Detailed_Event("Shkiya",
-                           "{}T{}".format(event_date_eng, shkiya),
-                           "{}T{}".format(event_date_eng, shkiya)))
+                (shkiya + timedelta(minutes=1)).strftime(TIMEF),
+                (shkiya + timedelta(minutes=1)).strftime(TIMEF)))
 
-            maariv = round_time(datetime.combine(event_date,
-                                             time(*(int(x) for x in shkiya.split(":")))))
+            maariv = round_time(shkiya)
             calendar_zmanim.append(Detailed_Event("Maariv",
-                                                  (maariv - timedelta(minutes=15)).strftime(TIMEF),
-                                                  (maariv + timedelta(minutes=15)).strftime(TIMEF)))
+                (maariv - timedelta(minutes=15)).strftime(TIMEF),
+                (maariv + timedelta(minutes=15)).strftime(TIMEF)))
 
     return calendar_zmanim
 
-def main():
+def main(start_date, end_date, test_status):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
 
-    CALENDAR_ID = 'nbhice9ul1r07h5hrqbuvtuqjs@group.calendar.google.com' # Test Calendar
-    #CALENDAR_ID = 'o909ivhdfhmoucc836mbtai2vo@group.calendar.google.com' # Yavneh Minyan Times Calendar
+    TEST_ID = 'nbhice9ul1r07h5hrqbuvtuqjs@group.calendar.google.com' # Test Calendar
+    MINYAN_ID = 'o909ivhdfhmoucc836mbtai2vo@group.calendar.google.com' # Yavneh Minyan Times Calendar
 
-    # get_zmanim_from_ou('09/12/17', '12/22/17')
-    start_date = '10/21/17'#'09/12/17'
-    end_date = '10/29/17' #'12/22/17'
-    for zman in get_zmanim_from_ou(start_date, end_date):
+    CALENDAR_ID = MINYAN_ID if test_status is None else TEST_ID
+
+    zmanim = get_zmanim_from_ou(start_date, end_date)
+    for zman in zmanim:
         create_event(service, CALENDAR_ID, *zman)
 
+    print("Hopefully created {} events".format(len(zmanim)))
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--test", help="sets calendar where insert events",
+                        action="store_true")
+    parser.add_argument("start_date", help="start date in the form mm/dd/yy")
+    parser.add_argument("end_date", help="end date in the form mm/dd/yy")
+    args = parser.parse_args()
+
+    main(args.start_date, args.end_date, args.test)
