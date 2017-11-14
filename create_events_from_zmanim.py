@@ -132,9 +132,10 @@ def get_zmanim_from_ou(start_date, end_date):
                 (candle_lighting - timedelta(minutes=1)).strftime(TIMEF)))
 
 
+            mincha_kab = round_time(candle_lighting)
             calendar_zmanim.append(Detailed_Event("Mincha & Kabbalat Shabbat & Maariv",
-                candle_lighting.strftime(TIMEF),
-                (candle_lighting + timedelta(hours=1, minutes=20)).strftime(TIMEF)))
+                mincha_kab.strftime(TIMEF),
+                (mincha_kab + timedelta(hours=1, minutes=20)).strftime(TIMEF)))
 
         elif day_of_week == "6":
             sof_zman = translate_time(event_date,
@@ -187,7 +188,7 @@ def main(start_date, end_date, test_status):
     TEST_ID = 'nbhice9ul1r07h5hrqbuvtuqjs@group.calendar.google.com' # Test Calendar
     MINYAN_ID = 'o909ivhdfhmoucc836mbtai2vo@group.calendar.google.com' # Yavneh Minyan Times Calendar
 
-    CALENDAR_ID = MINYAN_ID if test_status is None else TEST_ID
+    CALENDAR_ID = MINYAN_ID if not test_status else TEST_ID
 
     zmanim = get_zmanim_from_ou(start_date, end_date)
     for zman in zmanim:
