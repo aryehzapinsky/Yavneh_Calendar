@@ -131,11 +131,11 @@ def get_zmanim_from_ou(start_date, end_date):
                 (candle_lighting - timedelta(minutes=1)).strftime(TIMEF),
                 (candle_lighting - timedelta(minutes=1)).strftime(TIMEF)))
 
-
             mincha_kab = round_time(candle_lighting)
             calendar_zmanim.append(Detailed_Event("Mincha & Kabbalat Shabbat & Maariv",
                 mincha_kab.strftime(TIMEF),
                 (mincha_kab + timedelta(hours=1, minutes=20)).strftime(TIMEF)))
+
 
         elif day_of_week == "6":
             sof_zman = translate_time(event_date,
