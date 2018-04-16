@@ -99,7 +99,7 @@ def get_zmanim_from_ou(start_date, end_date):
     # Shabbat - dayOfWeek == "6"
     # SOF_ZMAN_KRIYAT_SHEMA = zmanim.get('sof_sman_shema_gra')
     # SHKIYA = zmanim.get('sunset')
-    # MINCHA = -30 minutes from Shkiya
+    # MINCHA = -35 minutes from Shkiya (changed from 30 upon request of Gabbinate 2018)
     # HAVDALAH = zmanim.get('tzeis_850_degrees')
     # MAARIV = -10 from havdalah
 
@@ -151,7 +151,7 @@ def get_zmanim_from_ou(start_date, end_date):
 
             shabbat_mincha = round_time(shkiya)
             calendar_zmanim.append(Detailed_Event("Shabbat Mincha",
-                (shabbat_mincha - timedelta(minutes=30)).strftime(TIMEF),
+                (shabbat_mincha - timedelta(minutes=35)).strftime(TIMEF),
                 (shabbat_mincha + timedelta(minutes=30)).strftime(TIMEF)))
 
             havdalah = translate_time(event_date,
@@ -174,7 +174,7 @@ def get_zmanim_from_ou(start_date, end_date):
                 (shkiya + timedelta(minutes=1)).strftime(TIMEF)))
 
             maariv = round_time(shkiya)
-            calendar_zmanim.append(Detailed_Event("Maariv",
+            calendar_zmanim.append(Detailed_Event("Mincha/Maariv",
                 (maariv - timedelta(minutes=15)).strftime(TIMEF),
                 (maariv + timedelta(minutes=15)).strftime(TIMEF)))
 
