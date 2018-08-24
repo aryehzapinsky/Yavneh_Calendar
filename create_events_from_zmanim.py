@@ -102,8 +102,9 @@ def get_zmanim_from_ou(start_date, end_date):
 
     calendar_zmanim = []
 
-    with urllib.request.urlopen('http://db.ou.org/zmanim/getCalendarData.php?mode=drange&timezone=America/New_York&dateBegin={BEGIN}&dateEnd={END}&lat=40.8139&lng=-73.9624'.format(BEGIN=start_date, END=end_date)) as page:
-        days = json.load(page).get('days')
+    with urllib.request.urlopen('http://db.ou.org/zmanim/getCalendarData.php?mode=drange&timezone=America/New_York&dateBegin={BEGIN}&dateEnd={END}&lat=40.8139&lng=-73.9624'.format(BEGIN=start_date, END=end_date)) as response:
+        string_response = response.read().decode('utf-8')
+        days = json.loads(string_response).get('days')
 
     for day in days:
         day_of_week = day.get('dayOfWeek')
