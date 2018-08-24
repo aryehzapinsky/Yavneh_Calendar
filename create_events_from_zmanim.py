@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from __future__ import print_function
 import httplib2
 import os
@@ -16,22 +18,13 @@ from collections import namedtuple
 Detailed_Event = namedtuple("Detail_Event", "name start end")
 TIMEF = "%Y-%m-%dT%H:%M:%S"
 
-# Commented out this section because interfering with custom argument.
-# Should readd.
-# try:
-#     import argparse
-#     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-# except ImportError:
-#     flags = None
-flags = None
-
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/calendar'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Yavneh Davening Calendar'
 
-def get_credentials():
+def get_credentials(flags):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are
@@ -53,10 +46,7 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
+        credentials = tools.run_flow(flow, store, flags)
         print('Storing credentials to ' + credential_path)
     return credentials
 
@@ -180,8 +170,8 @@ def get_zmanim_from_ou(start_date, end_date):
 
     return calendar_zmanim
 
-def main(start_date, end_date, test_status):
-    credentials = get_credentials()
+def main(start_date, end_date, test_status, flags):
+    credentials = get_credentials(flags)
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
 
@@ -198,11 +188,11 @@ def main(start_date, end_date, test_status):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(parents=[tools.argparser])
     parser.add_argument("-t", "--test", help="sets calendar where insert events",
                         action="store_true")
     parser.add_argument("start_date", help="start date in the form mm/dd/yy")
     parser.add_argument("end_date", help="end date in the form mm/dd/yy")
     args = parser.parse_args()
 
-    main(args.start_date, args.end_date, args.test)
+    main(args.start_date, args.end_date, args.test, args)
